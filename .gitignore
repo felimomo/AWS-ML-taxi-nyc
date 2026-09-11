@@ -1,6 +1,7 @@
 # Project
 data/
 *.parquet
+data_size.txt
 
 # Mac OS
 .DS_Store
