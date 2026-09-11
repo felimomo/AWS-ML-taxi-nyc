@@ -31,23 +31,38 @@ class ScalarXGBPipeline:
         self.X_train, self.X_eval, self.y_train, self.y_eval = (
             train_test_split(
                 data[self.features].to_numpy(), 
-                data[[self.target]].to_numpy(),
+                data[self.target].to_numpy(),
                 train_size=train_eval_spl,
             )
         )
+        #
+        self.n_jobs = n_jobs
         self.model = xgb.XGBRegressor(n_estimators=200, max_depth=6, n_jobs=self.n_jobs)
 
     def train(self):
-        self.model.fit(self.X_train, self.y_train)
+        # Lagged features have NaN values. This is handled internally by xgboost.
+        self.model.fit(
+            self.X_train, 
+            self.y_train,
+            eval_set=[(self.X_eval, self.y_eval)],
+            verbose=False,
+        )
 
     def eval(self):
-        self.y_pred = self.model.predict(self.X_test)
+        self.y_pred = self.model.predict(self.X_eval)
         self.rmse = root_mean_squared_error(self.y_eval, self.y_pred)
         self.mae = mean_absolute_error(self.y_eval, self.y_pred)
         self.r2 = r2_score(self.y_eval, self.y_pred)
         self.mape = mean_absolute_percentage_error(self.y_eval, self.y_pred)
 
+        # naive baseline: assume this hour = last hour
+        baseline_idx = self.features.index("lag_1_trip_count")
+        baseline_pred = self.X_eval[:, baseline_idx]
+        self.baseline_rmse = root_mean_squared_error(self.y_eval, baseline_pred)
+        self.baseline_mae = mean_absolute_error(self.y_eval, baseline_pred)
+
     def run(self):
         self.train()
         self.eval()
+        return {"rmse": self.rmse, "mae": self.mae, "r2": self.r2, "mape": self.mape}
     
