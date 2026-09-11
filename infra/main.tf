@@ -23,3 +23,18 @@ resource "aws_s3_object" "taxi_files" {
   source = "${var.local_data_dir}/${each.value}"
   etag   = filemd5("${var.local_data_dir}/${each.value}")  # re-upload on change
 }
+
+resource "aws_s3_bucket" "athena_results" {
+  bucket        = "nyc-taxi-athena-results-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "athena_results_expiry" {
+  bucket = aws_s3_bucket.athena_results.id
+  rule {
+    id     = "expire-athena-results"
+    status = "Enabled"
+    filter {}
+    expiration { days = 7 }
+  }
+}

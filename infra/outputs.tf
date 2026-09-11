@@ -5,3 +5,7 @@ output "bucket_name" {
 output "athena_location" {
   value = "s3://${aws_s3_bucket.taxi_data.id}/nyc-taxi/yellow/"
 }
+
+output "athena_results_location" {
+  value = "s3://${aws_s3_bucket.athena_results.id}/"
+}
