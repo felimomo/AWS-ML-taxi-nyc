@@ -38,3 +38,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "athena_results_expiry" {
     expiration { days = 7 }
   }
 }
+
+# training data bucket:
+resource "aws_s3_bucket" "training_data" {
+  bucket        = "nyc-taxi-training-data-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "training_data_expiry" {
+  bucket = aws_s3_bucket.training_data.id
+  rule {
+    id     = "expire-training-data"
+    status = "Enabled"
+    filter {}
+    expiration { days = 7 }
+  }
+}
